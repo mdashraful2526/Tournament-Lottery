@@ -250,36 +250,13 @@
                 grid-template-columns: 1fr;
             }
         }
-
-        .newspapers {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .newspaper-chip {
-            background: #667eea;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .newspaper-chip:hover {
-            transform: scale(1.05);
-            background: #5568d3;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🗞️ বাংলাদেশ সংবাদপত্র জেনারেটর</h1>
-            <p>আপনার নিজস্ব সংবাদপত্র নিবন্ধ তৈরি করুন এবং PDF ডাউনলোড করুন</p>
+            <p>আপনার নিজস্ব সংবাদপত্র নিবন্ধ তৈরি করুন এবং ইমেজ ডাউনলোড করুন</p>
         </div>
 
         <div class="content">
@@ -326,7 +303,7 @@
                 <div class="form-group">
                     <label>ছবি আপলোড (একাধিক ছবি নির্বাচন করতে পারবেন)</label>
                     <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;">
-                    <button class="btn" onclick="document.getElementById('imageUpload').click()" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); margin-top: 0;">
+                    <button class="btn" onclick="handleImageClick()" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); margin-top: 0;">
                         📷 ছবি নির্বাচন করুন
                     </button>
                     <div id="imagePreviewContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 15px;"></div>
@@ -338,7 +315,7 @@
                 </div>
 
                 <button class="btn" onclick="generateNewspaper()">📰 প্রিভিউ দেখুন</button>
-                <button class="btn" onclick="downloadImage()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">📥 ছবি হিসেবে ডাউনলোড করুন</button>
+                <button class="btn" onclick="handleDownloadImage()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">📥 ছবি হিসেবে ডাউনলোড করুন</button>
             </div>
 
             <div class="preview-section">
@@ -387,13 +364,16 @@
             }
         });
 
-        // Image upload with multiple images support (optimized for speed)
+        // Image upload
         let uploadedImages = [];
+
+        function handleImageClick() {
+            document.getElementById('imageUpload').click();
+        }
 
         document.getElementById('imageUpload').addEventListener('change', function(e) {
             const files = e.target.files;
             
-            // Process all files quickly
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -442,19 +422,16 @@
             document.getElementById('previewAuthor').textContent = author ? `লেখক: ${author}` : 'লেখক: -';
             document.getElementById('previewText').textContent = articleText || 'সংবাদের বিষয়বস্তু এখানে দেখা যাবে...';
 
-            // Display images in preview
             const previewImagesContainer = document.getElementById('previewImagesContainer');
             previewImagesContainer.innerHTML = '';
             
             if (uploadedImages.length > 0) {
                 if (uploadedImages.length === 1) {
-                    // Single image - full width
                     const img = document.createElement('img');
                     img.src = uploadedImages[0];
                     img.className = 'article-image';
                     previewImagesContainer.appendChild(img);
                 } else {
-                    // Multiple images - grid layout
                     const gridDiv = document.createElement('div');
                     gridDiv.className = 'article-images-grid';
                     
@@ -469,59 +446,29 @@
             }
         }
 
-        function downloadPDF() {
+        function handleDownloadImage() {
             const element = document.getElementById('newspaperPreview');
             
-            // Create a temporary clone for PDF generation
-            const clone = element.cloneNode(true);
-            clone.style.width = '210mm';
-            clone.style.minHeight = '297mm';
-            clone.style.padding = '15mm';
-            clone.style.boxSizing = 'border-box';
-            clone.style.backgroundColor = 'white';
-            clone.style.fontFamily = "'Noto Serif Bengali', 'SolaimanLipi', Arial, sans-serif";
-            
-            // Improve text rendering
-            const allText = clone.querySelectorAll('*');
-            allText.forEach(el => {
-                el.style.letterSpacing = '0.3px';
-                el.style.wordSpacing = '1px';
-            });
-            
-            document.body.appendChild(clone);
-            
-            const opt = {
-                margin: 0,
-                filename: 'newspaper-article.pdf',
-                image: { 
-                    type: 'jpeg', 
-                    quality: 1
-                },
-                html2canvas: { 
-                    scale: 3,
-                    useCORS: true,
-                    letterRendering: true,
-                    logging: false,
-                    width: 794,
-                    height: 1123,
-                    windowWidth: 794,
-                    windowHeight: 1123
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait',
-                    compress: false
-                },
-                pagebreak: { 
-                    mode: ['avoid-all', 'css', 'legacy'],
-                    before: '.newspaper-header',
-                    after: '.article-text'
-                }
-            };
-
-            html2pdf().set(opt).from(clone).save().then(() => {
-                document.body.removeChild(clone);
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then(function(canvas) {
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = 'newspaper-' + Date.now() + '.png';
+                    link.href = url;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            }).catch(function(err) {
+                console.error('Error:', err);
+                alert('ডাউনলোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
             });
         }
     </script>

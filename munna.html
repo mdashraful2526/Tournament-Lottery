@@ -170,79 +170,72 @@
         .newspaper-header {
             text-align: center;
             border-bottom: 3px solid #000;
-            padding: 20px 20px 15px 20px;
+            padding: 15px 15px 12px 15px;
             margin: 0;
             background: #f9f9f9;
         }
 
         .newspaper-name {
-            font-size: 3em;
+            font-size: 2.8em;
             font-weight: bold;
             color: #1e3c72;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
+            margin-bottom: 8px;
         }
 
         .newspaper-info {
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #666;
-            letter-spacing: 0.5px;
         }
 
         .newspaper-content {
-            padding: 20px;
-            line-height: 1.9;
+            padding: 15px;
+            line-height: 1.6;
         }
 
         .article-headline {
             font-size: 2.2em;
             font-weight: bold;
-            margin: 0 0 15px 0;
+            margin: 0 0 12px 0;
             color: #000;
-            line-height: 1.4;
-            letter-spacing: 0.5px;
-            word-spacing: 2px;
+            line-height: 1.3;
         }
 
         .article-meta {
             color: #666;
-            margin: 0 0 15px 0;
+            margin: 0 0 12px 0;
             font-style: italic;
-            letter-spacing: 0.3px;
+            font-size: 0.95em;
         }
 
         .article-image {
             width: 100%;
-            max-height: 400px;
+            max-height: 350px;
             object-fit: cover;
-            margin: 15px 0;
+            margin: 12px 0;
             border-radius: 0;
         }
 
         .article-images-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 8px;
+            margin: 12px 0;
         }
 
         .article-images-grid img {
             width: 100%;
-            height: 300px;
+            height: 250px;
             object-fit: cover;
             border-radius: 0;
         }
 
         .article-text {
-            font-size: 1.15em;
-            line-height: 2;
+            font-size: 13pt;
+            line-height: 1.6;
             text-align: justify;
             color: #333;
             margin: 0;
             word-wrap: break-word;
-            letter-spacing: 0.4px;
-            word-spacing: 1.5px;
-            hyphens: none;
         }
 
         @media (max-width: 768px) {
@@ -453,18 +446,33 @@
             const wrapper = document.createElement('div');
             wrapper.style.width = '210mm';
             wrapper.style.minHeight = '297mm';
-            wrapper.style.padding = '20mm';
+            wrapper.style.padding = '10mm';
             wrapper.style.backgroundColor = '#ffffff';
             wrapper.style.boxSizing = 'border-box';
             wrapper.style.position = 'absolute';
             wrapper.style.left = '-9999px';
             wrapper.style.fontFamily = "'Noto Serif Bengali', 'SolaimanLipi', 'Kalpurush', Arial, sans-serif";
+            wrapper.style.pageBreakInside = 'avoid';
             
             // Clone the content
             const clonedContent = element.cloneNode(true);
             clonedContent.style.padding = '0';
+            clonedContent.style.margin = '0';
+            
+            // Adjust text size for better fit
+            const textElement = clonedContent.querySelector('.article-text');
+            if (textElement) {
+                textElement.style.fontSize = '13pt';
+                textElement.style.lineHeight = '1.6';
+            }
+            
             wrapper.appendChild(clonedContent);
             document.body.appendChild(wrapper);
+            
+            // Calculate pages needed
+            const contentHeight = wrapper.scrollHeight;
+            const pageHeight = 1123; // A4 height in pixels
+            const pagesNeeded = Math.ceil(contentHeight / pageHeight);
             
             html2canvas(wrapper, {
                 scale: 3,
@@ -472,8 +480,8 @@
                 allowTaint: false,
                 backgroundColor: '#ffffff',
                 logging: false,
-                width: 794,  // A4 width in pixels at 96 DPI
-                height: 1123 // A4 height in pixels at 96 DPI
+                width: 794,
+                height: Math.max(contentHeight, pageHeight)
             }).then(function(canvas) {
                 document.body.removeChild(wrapper);
                 

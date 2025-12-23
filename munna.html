@@ -1,1 +1,394 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>বাংলাদেশ সংবাদপত্র জেনারেটর</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'SolaimanLipi', 'Kalpurush', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        .form-section h2 {
+            color: #2a5298;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: 'SolaimanLipi', 'Kalpurush', Arial, sans-serif;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .image-upload {
+            position: relative;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .image-upload:hover {
+            background: #f0f0f0;
+        }
+
+        .image-upload input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .preview-section {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #newspaperPreview {
+            padding: 40px;
+            background: white;
+        }
+
+        .newspaper-header {
+            text-align: center;
+            border-bottom: 3px solid #000;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .newspaper-name {
+            font-size: 3em;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+
+        .newspaper-info {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .article-headline {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #000;
+            line-height: 1.3;
+        }
+
+        .article-meta {
+            color: #666;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .article-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .article-text {
+            font-size: 1.1em;
+            line-height: 1.8;
+            text-align: justify;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .newspapers {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .newspaper-chip {
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .newspaper-chip:hover {
+            transform: scale(1.05);
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗞️ বাংলাদেশ সংবাদপত্র জেনারেটর</h1>
+            <p>আপনার নিজস্ব সংবাদপত্র নিবন্ধ তৈরি করুন এবং PDF ডাউনলোড করুন</p>
+        </div>
+
+        <div class="content">
+            <div class="form-section">
+                <h2>📝 তথ্য লিখুন</h2>
+                
+                <div class="form-group">
+                    <label>পত্রিকার নাম</label>
+                    <select id="newspaperName">
+                        <option value="">নির্বাচন করুন বা লিখুন</option>
+                        <option value="প্রথম আলো">প্রথম আলো</option>
+                        <option value="কালের কণ্ঠ">কালের কণ্ঠ</option>
+                        <option value="যুগান্তর">যুগান্তর</option>
+                        <option value="সমকাল">সমকাল</option>
+                        <option value="ইত্তেফাক">ইত্তেফাক</option>
+                        <option value="বাংলাদেশ প্রতিদিন">বাংলাদেশ প্রতিদিন</option>
+                        <option value="যায়যায়দিন">যায়যায়দিন</option>
+                        <option value="মানবজমিন">মানবজমিন</option>
+                        <option value="ভোরের কাগজ">ভোরের কাগজ</option>
+                        <option value="নয়া দিগন্ত">নয়া দিগন্ত</option>
+                        <option value="The Daily Star">The Daily Star</option>
+                        <option value="Dhaka Tribune">Dhaka Tribune</option>
+                        <option value="custom">নিজস্ব নাম লিখুন</option>
+                    </select>
+                    <input type="text" id="customNewspaperName" placeholder="নিজস্ব পত্রিকার নাম" style="display: none; margin-top: 10px;">
+                </div>
+
+                <div class="form-group">
+                    <label>শিরোনাম</label>
+                    <input type="text" id="headline" placeholder="সংবাদের শিরোনাম লিখুন">
+                </div>
+
+                <div class="form-group">
+                    <label>লেখক</label>
+                    <input type="text" id="author" placeholder="লেখকের নাম">
+                </div>
+
+                <div class="form-group">
+                    <label>ছবি আপলোড</label>
+                    <div class="image-upload" id="imageUploadBox">
+                        <input type="file" id="imageUpload" accept="image/*">
+                        <p>📷 ছবি নির্বাচন করতে ক্লিক করুন</p>
+                        <img id="imagePreview" alt="Preview">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>সংবাদ লিখুন</label>
+                    <textarea id="articleText" placeholder="এখানে সংবাদের বিস্তারিত লিখুন..."></textarea>
+                </div>
+
+                <button class="btn" onclick="generateNewspaper()">📰 প্রিভিউ দেখুন</button>
+                <button class="btn" onclick="downloadPDF()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">📥 PDF ডাউনলোড করুন</button>
+            </div>
+
+            <div class="preview-section">
+                <div id="newspaperPreview">
+                    <div class="newspaper-header">
+                        <div class="newspaper-name" id="previewNewspaperName">পত্রিকার নাম</div>
+                        <div class="newspaper-info" id="previewDate"></div>
+                    </div>
+                    <div class="article-headline" id="previewHeadline">শিরোনাম এখানে দেখা যাবে</div>
+                    <div class="article-meta" id="previewAuthor">লেখক: -</div>
+                    <img id="previewImage" class="article-image" style="display: none;">
+                    <div class="article-text" id="previewText">সংবাদের বিষয়বস্তু এখানে দেখা যাবে...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // বাংলা তারিখ
+        const bengaliMonths = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+        const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+
+        function toBengaliNumber(num) {
+            return String(num).split('').map(d => bengaliDigits[d]).join('');
+        }
+
+        function getBengaliDate() {
+            const date = new Date();
+            const day = toBengaliNumber(date.getDate());
+            const month = bengaliMonths[date.getMonth()];
+            const year = toBengaliNumber(date.getFullYear());
+            return `${day} ${month}, ${year}`;
+        }
+
+        document.getElementById('previewDate').textContent = getBengaliDate();
+
+        // Newspaper selection
+        document.getElementById('newspaperName').addEventListener('change', function() {
+            const customInput = document.getElementById('customNewspaperName');
+            if (this.value === 'custom') {
+                customInput.style.display = 'block';
+            } else {
+                customInput.style.display = 'none';
+            }
+        });
+
+        // Image upload
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function generateNewspaper() {
+            const newspaperSelect = document.getElementById('newspaperName');
+            const customName = document.getElementById('customNewspaperName').value;
+            const newspaperName = newspaperSelect.value === 'custom' ? customName : newspaperSelect.value;
+            const headline = document.getElementById('headline').value;
+            const author = document.getElementById('author').value;
+            const articleText = document.getElementById('articleText').value;
+            const imagePreview = document.getElementById('imagePreview');
+
+            document.getElementById('previewNewspaperName').textContent = newspaperName || 'পত্রিকার নাম';
+            document.getElementById('previewHeadline').textContent = headline || 'শিরোনাম এখানে দেখা যাবে';
+            document.getElementById('previewAuthor').textContent = author ? `লেখক: ${author}` : 'লেখক: -';
+            document.getElementById('previewText').textContent = articleText || 'সংবাদের বিষয়বস্তু এখানে দেখা যাবে...';
+
+            const previewImage = document.getElementById('previewImage');
+            if (imagePreview.src && imagePreview.style.display !== 'none') {
+                previewImage.src = imagePreview.src;
+                previewImage.style.display = 'block';
+            } else {
+                previewImage.style.display = 'none';
+            }
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('newspaperPreview');
+            const opt = {
+                margin: 10,
+                filename: 'newspaper-article.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>

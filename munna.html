@@ -101,23 +101,7 @@
         }
 
         .image-upload {
-            position: relative;
-            border: 2px dashed #667eea;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .image-upload:hover {
-            background: #f0f0f0;
-        }
-
-        .image-upload input {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
+            display: none;
         }
 
         .preview-image-item {
@@ -196,15 +180,18 @@
             font-weight: bold;
             color: #1e3c72;
             margin-bottom: 10px;
+            letter-spacing: 1px;
         }
 
         .newspaper-info {
             font-size: 0.9em;
             color: #666;
+            letter-spacing: 0.5px;
         }
 
         .newspaper-content {
             padding: 20px;
+            line-height: 1.9;
         }
 
         .article-headline {
@@ -212,13 +199,16 @@
             font-weight: bold;
             margin: 0 0 15px 0;
             color: #000;
-            line-height: 1.3;
+            line-height: 1.4;
+            letter-spacing: 0.5px;
+            word-spacing: 2px;
         }
 
         .article-meta {
             color: #666;
             margin: 0 0 15px 0;
             font-style: italic;
+            letter-spacing: 0.3px;
         }
 
         .article-image {
@@ -244,12 +234,15 @@
         }
 
         .article-text {
-            font-size: 1.1em;
-            line-height: 1.8;
+            font-size: 1.15em;
+            line-height: 2;
             text-align: justify;
             color: #333;
             margin: 0;
             word-wrap: break-word;
+            letter-spacing: 0.4px;
+            word-spacing: 1.5px;
+            hyphens: none;
         }
 
         @media (max-width: 768px) {
@@ -332,11 +325,11 @@
 
                 <div class="form-group">
                     <label>ছবি আপলোড (একাধিক ছবি নির্বাচন করতে পারবেন)</label>
-                    <div class="image-upload" id="imageUploadBox">
-                        <input type="file" id="imageUpload" accept="image/*" multiple>
-                        <p>📷 একটি বা একাধিক ছবি নির্বাচন করতে ক্লিক করুন</p>
-                    </div>
-                    <div id="imagePreviewContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px;"></div>
+                    <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;">
+                    <button class="btn" onclick="document.getElementById('imageUpload').click()" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); margin-top: 0;">
+                        📷 ছবি নির্বাচন করুন
+                    </button>
+                    <div id="imagePreviewContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 15px;"></div>
                 </div>
 
                 <div class="form-group">
@@ -478,25 +471,58 @@
 
         function downloadPDF() {
             const element = document.getElementById('newspaperPreview');
+            
+            // Create a temporary clone for PDF generation
+            const clone = element.cloneNode(true);
+            clone.style.width = '210mm';
+            clone.style.minHeight = '297mm';
+            clone.style.padding = '15mm';
+            clone.style.boxSizing = 'border-box';
+            clone.style.backgroundColor = 'white';
+            clone.style.fontFamily = "'Noto Serif Bengali', 'SolaimanLipi', Arial, sans-serif";
+            
+            // Improve text rendering
+            const allText = clone.querySelectorAll('*');
+            allText.forEach(el => {
+                el.style.letterSpacing = '0.3px';
+                el.style.wordSpacing = '1px';
+            });
+            
+            document.body.appendChild(clone);
+            
             const opt = {
                 margin: 0,
                 filename: 'newspaper-article.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
+                image: { 
+                    type: 'jpeg', 
+                    quality: 1
+                },
                 html2canvas: { 
-                    scale: 2,
+                    scale: 3,
                     useCORS: true,
-                    letterRendering: true
+                    letterRendering: true,
+                    logging: false,
+                    width: 794,
+                    height: 1123,
+                    windowWidth: 794,
+                    windowHeight: 1123
                 },
                 jsPDF: { 
                     unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait',
-                    compress: true
+                    compress: false
                 },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                pagebreak: { 
+                    mode: ['avoid-all', 'css', 'legacy'],
+                    before: '.newspaper-header',
+                    after: '.article-text'
+                }
             };
 
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(clone).save().then(() => {
+                document.body.removeChild(clone);
+            });
         }
     </script>
 </body>
